@@ -1,0 +1,28 @@
+{
+  "name": "orangehrm",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:e2e": "npx playwright test tests/e2e",
+    "test:api": "npx playwright test tests/api --project=chromium",
+    "test:auth": "npx playwright test tests/e2e/auth.spec.ts",
+    "test:employee": "npx playwright test tests/e2e/employee.spec.ts",
+    "test:smoke": "npx playwright test --grep @smoke",
+    "test:regression": "npx playwright test --grep @regression",
+    "test:k6": "k6 run tests/performance/load-test.js",
+    "test:ui": "npx playwright test --ui",
+    "test:headed": "npx playwright test --headed",
+    "report": "npx playwright show-report"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@faker-js/faker": "^10.2.0",
+    "@playwright/test": "^1.58.0",
+    "@types/node": "^25.0.10"
+  }
+}

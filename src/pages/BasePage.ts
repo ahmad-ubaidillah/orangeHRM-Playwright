@@ -1,0 +1,81 @@
+import { Page, Locator, expect } from "@playwright/test"
+import LoginPage from "./LoginPage"
+import { CONSTANTS } from "../utils/constants"
+
+export default class BasePage {
+  readonly page: Page;
+  readonly loadingSpinner: Locator;
+  readonly successToast: Locator;
+
+  constructor(page: Page){
+    this.page = page
+    this.loadingSpinner = page.locator('.oxd-loading-spinner').first()
+    this.successToast = page.locator('.oxd-toast--success')
+  }
+
+  async openApplication(): Promise<void>{
+    const loginPage = new LoginPage(this.page)
+    await this.page.goto(CONSTANTS.URLS.LOGIN);
+    await expect(loginPage.usernameInput).toBeVisible();
+  }
+
+  /**
+   * Waits for all loading animations to finish.
+   * This ensures the page is stable before performing actions.
+   */
+  async waitForLoadingComplete(timeout: number = CONSTANTS.TIMEOUTS.LONG): Promise<void> {
+    await expect(this.page.locator('.oxd-loading-spinner:visible'), "Wait for spinners to disappear").toHaveCount(0, { timeout })
+  }
+
+  async verifyToast(message: string = CONSTANTS.MESSAGES.SUCCESS_SAVE): Promise<void> {
+    await expect(this.successToast).toBeVisible({ timeout: CONSTANTS.TIMEOUTS.LONG })
+    if (message) {
+      await expect(this.successToast).toContainText(message)
+    }
+  }
+
+  async refresh(): Promise<void> {
+    await this.page.reload({ waitUntil: 'networkidle' })
+    await this.waitForLoadingComplete()
+  }
+}
+
+/**
+ * Helper class to handle table interactions like searching and verification.
+ */
+export class TableComponent {
+  readonly page: Page
+  readonly tableBody: Locator
+  readonly rows: Locator
+  readonly noRecordsMsg: Locator
+  readonly loadingSpinner: Locator
+
+  constructor(page: Page) {
+    this.page = page
+    this.tableBody = page.locator('.oxd-table-body')
+    this.rows = page.locator('.oxd-table-card')
+    this.noRecordsMsg = page.getByText(CONSTANTS.MESSAGES.NO_RECORDS).first()
+    this.loadingSpinner = page.locator('.oxd-loading-spinner')
+  }
+
+  async waitForLoading(): Promise<void> {
+    await expect(this.page.locator('.oxd-loading-spinner:visible')).toHaveCount(0, { timeout: CONSTANTS.TIMEOUTS.LONG })
+  }
+
+  async verifyRowText(text: string): Promise<void> {
+    await this.waitForLoading()
+    await expect(this.tableBody).toContainText(text, { ignoreCase: true })
+  }
+
+  async verifyNoRecords(): Promise<void> {
+    await this.waitForLoading()
+    await expect(this.noRecordsMsg).toBeVisible()
+  }
+
+  async clickRowAction(rowIndex: number, actionIconClass: string): Promise<void> {
+    await this.waitForLoading()
+    const row = this.rows.nth(rowIndex)
+    await expect(row).toBeVisible()
+    await row.locator(actionIconClass).first().click()
+  }
+}
