@@ -10,7 +10,6 @@ export default class AdminPage extends BasePage {
   readonly saveBtn: Locator
   readonly searchBtn: Locator
   readonly resetBtn: Locator
-  readonly confirmDeleteBtn: Locator
   readonly listbox: Locator
   readonly addFormContainer: Locator
   readonly addFormUsernameInput: Locator
@@ -29,10 +28,9 @@ export default class AdminPage extends BasePage {
     this.addFormPasswordInput = this.addFormContainer.locator('.oxd-input-group:has-text("Password") input[type="password"]').first()
     this.addFormConfirmPasswordInput = this.addFormContainer.locator('.oxd-input-group:has-text("Confirm Password") input[type="password"]').first()
     this.saveBtn = this.addFormContainer.locator('.oxd-form-actions button[type="submit"]')
-    
+
     this.searchBtn = page.locator('.oxd-table-filter button[type="submit"]')
     this.resetBtn = page.getByRole('button', { name: 'Reset' })
-    this.confirmDeleteBtn = page.getByRole('button', { name: 'Yes, Delete' })
     this.listbox = page.locator('.oxd-select-dropdown')
     this.searchFilterUsernameInput = page.locator('.oxd-table-filter .oxd-input-group:has-text("Username") input')
   }
@@ -41,7 +39,7 @@ export default class AdminPage extends BasePage {
     const responsePromise = this.page.waitForResponse(
       resp => CONSTANTS.ENDPOINTS.ADMIN_LIST.test(resp.url()) && resp.status() === 200,
       { timeout: CONSTANTS.TIMEOUTS.API_WAIT }
-    ).catch(() => {})
+    ).catch(() => { })
 
     await this.page.goto(CONSTANTS.URLS.ADMIN)
     await this.waitForLoadingComplete()
@@ -51,12 +49,12 @@ export default class AdminPage extends BasePage {
   async clickAdd(): Promise<void> {
     // The photo is the last thing to load according to user feedback
     const photoPromise = this.page.waitForResponse(
-        resp => CONSTANTS.ENDPOINTS.PROFILE_PHOTO.test(resp.url()) && resp.status() === 200,
-        { timeout: CONSTANTS.TIMEOUTS.API_WAIT }
-    ).catch(() => {})
+      resp => CONSTANTS.ENDPOINTS.PROFILE_PHOTO.test(resp.url()) && resp.status() === 200,
+      { timeout: CONSTANTS.TIMEOUTS.API_WAIT }
+    ).catch(() => { })
 
     await this.page.goto(CONSTANTS.URLS.ADMIN_ADD)
-    
+
     await expect(this.page.getByRole('heading', { name: 'Add User' }), "Should navigate to Add User page").toBeVisible({ timeout: CONSTANTS.TIMEOUTS.NAVIGATION })
     await this.waitForLoadingComplete()
     await photoPromise
@@ -85,32 +83,32 @@ export default class AdminPage extends BasePage {
     let found = false
 
     for (let i = 0; i < 3; i++) {
-        try {
+      try {
         await this.employeeNameInput.clear()
-        
+
         const responsePromise = this.page.waitForResponse(
           resp => resp.url().includes(CONSTANTS.ENDPOINTS.EMPLOYEES) && resp.status() === 200,
           { timeout: CONSTANTS.TIMEOUTS.API_WAIT }
-        ).catch(() => {})
+        ).catch(() => { })
 
         await this.employeeNameInput.pressSequentially(searchPrefix, { delay: CONSTANTS.TIMEOUTS.TYPING_DELAY })
-        
+
         await responsePromise
-        await this.page.waitForTimeout(CONSTANTS.TIMEOUTS.SHORT) 
+        await this.page.waitForTimeout(CONSTANTS.TIMEOUTS.SHORT)
 
         let option = this.page.locator('.oxd-autocomplete-option').filter({ hasText: employeeName }).first()
-        
+
         if (!await option.isVisible()) {
-            option = this.page.locator('.oxd-autocomplete-option')
-                .filter({ hasText: searchPrefix })
-                .filter({ hasText: searchLastName })
-                .first()
+          option = this.page.locator('.oxd-autocomplete-option')
+            .filter({ hasText: searchPrefix })
+            .filter({ hasText: searchLastName })
+            .first()
         }
 
         if (await option.isVisible()) {
-            await option.click()
-            found = true
-            break
+          await option.click()
+          found = true
+          break
         }
       } catch (e) {
         await this.page.waitForTimeout(CONSTANTS.TIMEOUTS.SHORT)
@@ -120,14 +118,20 @@ export default class AdminPage extends BasePage {
     if (!found) {
       throw new Error(`Could not find employee "${employeeName}" in autocomplete`)
     }
-    
+
     await this.addFormUsernameInput.fill(username)
     await this.addFormPasswordInput.fill(password)
     await this.addFormConfirmPasswordInput.fill(password)
   }
 
   async saveUser(): Promise<void> {
+    const responsePromise = this.page.waitForResponse(
+      resp => resp.url().includes(CONSTANTS.ENDPOINTS.USERS) && (resp.request().method() === 'POST' || resp.request().method() === 'PUT') && resp.status() === 200,
+      { timeout: CONSTANTS.TIMEOUTS.API_WAIT }
+    ).catch(() => { })
+
     await this.saveBtn.click()
+    await responsePromise
     await this.verifyToast(CONSTANTS.MESSAGES.SUCCESS_SAVE)
     await this.waitForLoadingComplete()
   }
@@ -138,11 +142,11 @@ export default class AdminPage extends BasePage {
 
   async searchUser(username: string): Promise<void> {
     await this.searchFilterUsernameInput.fill(username)
-    
+
     const responsePromise = this.page.waitForResponse(
       resp => resp.url().includes(CONSTANTS.ENDPOINTS.USERS) && resp.status() === 200,
       { timeout: CONSTANTS.TIMEOUTS.API_WAIT }
-    ).catch(() => {})
+    ).catch(() => { })
 
     await this.searchBtn.click()
     await this.waitForLoadingComplete()
@@ -158,15 +162,7 @@ export default class AdminPage extends BasePage {
   }
 
   async deleteUser(): Promise<void> {
-    await this.table.clickRowAction(0, '.bi-trash')
-  }
-
-  async confirmDelete(): Promise<void> {
-    await expect(this.confirmDeleteBtn).toBeVisible()
-    await this.confirmDeleteBtn.click()
-    // Sync: Toast appears first, then Loading hides
-    await this.verifyToast(CONSTANTS.MESSAGES.SUCCESS_DELETE)
-    await this.waitForLoadingComplete()
+    await this.table.clickDeleteRow(0)
   }
 
   async verifyDeleteSuccess(): Promise<void> {

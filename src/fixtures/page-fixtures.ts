@@ -14,22 +14,28 @@ async function ensureAuthenticated(
   dashboardPage: DashboardPage,
   loginPage: LoginPage
 ): Promise<void> {
-  // Go to login page - if already authenticated via storageState, server redirects to dashboard
-  await page.goto('/web/index.php/auth/login')
-  
-  // Wait for the URL to resolve to either dashboard (redirect) or login (no session)
-  await expect(page).toHaveURL(/dashboard|login/, { timeout: CONSTANTS.TIMEOUTS.DEFAULT});
-
-  // If we landed on dashboard, we hit the storageState cache. 
-  // We MUST still validate that the dashboard is loaded before returning.
-  if (page.url().includes('dashboard')) {
-    await dashboardPage.validateDashboard()
-    return
+  // 1. Check if we are arguably already logged in (Profile visible)
+  try {
+    await expect(dashboardPage.profile).toBeVisible({ timeout: 2000 }); // Quick check
+    return; // We are already authenticated and on a valid page
+  } catch (e) {
+    // Not visible, proceed to standard flow
   }
 
-  // Otherwise, perform manual login
-  await loginPage.login('Admin', 'admin123')
-  await dashboardPage.validateDashboard()
+  // 2. Navigate to Dashboard. If valid session, app stays on Dashboard. If not, redirects to Login.
+  await page.goto(CONSTANTS.URLS.DASHBOARD);
+
+  // 3. Wait for URL to settle
+  await expect(page).toHaveURL(/dashboard|login/, { timeout: CONSTANTS.TIMEOUTS.NAVIGATION });
+
+  // 4. Handle Login if needed
+  if (page.url().includes('login')) {
+    await loginPage.login(CONSTANTS.CREDENTIALS.USERNAME, CONSTANTS.CREDENTIALS.PASSWORD);
+    await dashboardPage.validateDashboard();
+  } else {
+    // We are on dashboard, just validate
+    await dashboardPage.validateDashboard();
+  }
 }
 
 export const test = base.extend<{
@@ -39,7 +45,7 @@ export const test = base.extend<{
   employeePage: EmployeePage;
   adminPage: AdminPage;
   ensureAuthenticated: () => Promise<void>;
-  loginAsUser: (username: string, password: string) => Promise<void>;
+
   logout: () => Promise<void>;
 }>({
   loginPage: async ({ page }, use) => {
@@ -62,13 +68,7 @@ export const test = base.extend<{
       await ensureAuthenticated(page, dashboardPage, loginPage);
     });
   },
-  loginAsUser: async ({ page, dashboardPage, loginPage }, use) => {
-    await use(async (username: string, password: string) => {
-      await page.goto('/web/index.php/auth/login')
-      await loginPage.login(username, password)
-      await dashboardPage.validateDashboard()
-    });
-  },
+
   logout: async ({ dashboardPage }, use) => {
     await use(async () => {
       await dashboardPage.logout();

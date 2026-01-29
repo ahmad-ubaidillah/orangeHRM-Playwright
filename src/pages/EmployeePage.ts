@@ -10,11 +10,10 @@ export default class EmployeePage extends BasePage {
   readonly employeeIdInput: Locator
   readonly saveBtn: Locator
   readonly searchBtn: Locator
-  readonly confirmDeleteBtn: Locator
   readonly filterIdInput: Locator
   readonly filterNameInput: Locator
 
-  constructor(page: Page){
+  constructor(page: Page) {
     super(page)
     this.table = new TableComponent(page)
     this.firstNameInput = page.locator('input[name="firstName"]')
@@ -23,16 +22,15 @@ export default class EmployeePage extends BasePage {
     this.employeeIdInput = page.locator('.oxd-input-group:has-text("Employee Id") input')
     this.saveBtn = page.locator('.oxd-form:has(input[name="firstName"]) button[type="submit"]')
     this.searchBtn = page.getByRole('button', { name: 'Search' })
-    this.confirmDeleteBtn = page.getByRole('button', { name: 'Yes, Delete' })
     this.filterIdInput = page.locator('.oxd-table-filter .oxd-input-group:has-text("Employee Id") input')
     this.filterNameInput = page.locator('.oxd-table-filter .oxd-input-group:has-text("Employee Name") input')
   }
 
-  async navigateToPIM(): Promise<void>{
+  async navigateToPIM(): Promise<void> {
     const responsePromise = this.page.waitForResponse(
       resp => CONSTANTS.ENDPOINTS.PIM_LIST.test(resp.url()) && resp.status() === 200,
       { timeout: CONSTANTS.TIMEOUTS.API_WAIT }
-    ).catch(() => {})
+    ).catch(() => { })
 
     await this.page.goto(CONSTANTS.URLS.PIM)
     await this.waitForLoadingComplete()
@@ -40,50 +38,50 @@ export default class EmployeePage extends BasePage {
     await expect(this.searchBtn).toBeVisible()
   }
 
-  async navigateToAddEmployee(): Promise<void>{
+  async navigateToAddEmployee(): Promise<void> {
     await this.page.goto(CONSTANTS.URLS.PIM_ADD)
     await this.waitForLoadingComplete()
     await expect(this.firstNameInput).toBeVisible()
   }
 
-  async fillEmployeeDetails(firstName: string, middleName: string, lastName: string, employeeId: string): Promise<void>{
+  async fillEmployeeDetails(firstName: string, middleName: string, lastName: string, employeeId: string): Promise<void> {
     await this.waitForLoadingComplete()
     await expect(this.firstNameInput).toBeVisible()
     await this.firstNameInput.fill(firstName)
     await this.middleNameInput.fill(middleName)
     await this.lastNameInput.fill(lastName)
-    
+
     if (employeeId) {
       await this.employeeIdInput.fill(employeeId)
     }
   }
 
-  async getEmployeeId(): Promise<string>{
+  async getEmployeeId(): Promise<string> {
     return await this.employeeIdInput.inputValue()
   }
 
-  async saveEmployee(): Promise<void>{
+  async saveEmployee(): Promise<void> {
     const responsePromise = this.page.waitForResponse(
       resp => resp.url().includes(CONSTANTS.ENDPOINTS.EMPLOYEES) && (resp.request().method() === 'POST' || resp.request().method() === 'PUT') && resp.status() === 200,
       { timeout: CONSTANTS.TIMEOUTS.API_WAIT }
-    ).catch(() => {})
+    ).catch(() => { })
 
     await this.saveBtn.click()
-    await this.verifyToast(CONSTANTS.MESSAGES.SUCCESS_SAVE) 
+    await this.verifyToast(CONSTANTS.MESSAGES.SUCCESS_SAVE)
     await this.waitForLoadingComplete()
     await responsePromise
   }
 
-  async verifySuccess(): Promise<void>{
+  async verifySuccess(): Promise<void> {
     await this.verifyToast(CONSTANTS.MESSAGES.SUCCESS_SAVE)
   }
 
-  async searchEmployeeById(employeeId: string): Promise<void>{
+  async searchEmployeeById(employeeId: string): Promise<void> {
     await this.filterIdInput.fill(employeeId)
     await this.performSearch()
   }
 
-  async searchEmployee(name: string): Promise<void>{
+  async searchEmployee(name: string): Promise<void> {
     await this.filterNameInput.fill(name)
     await this.performSearch()
   }
@@ -96,29 +94,29 @@ export default class EmployeePage extends BasePage {
     const responsePromise = this.page.waitForResponse(
       resp => endpointPattern instanceof RegExp ? endpointPattern.test(resp.url()) : resp.url().includes(endpointPattern),
       { timeout: CONSTANTS.TIMEOUTS.API_WAIT }
-    ).catch(() => {})
+    ).catch(() => { })
 
     await this.searchBtn.click()
     await this.waitForLoadingComplete()
     await responsePromise
   }
 
-  async verifyEmployeeInTable(firstName: string, middleName: string, lastName: string): Promise<void>{
+  async verifyEmployeeInTable(firstName: string, middleName: string, lastName: string): Promise<void> {
     await this.table.verifyRowText(firstName)
     await this.table.verifyRowText(lastName)
   }
 
-  async verifyNoRecords(): Promise<void>{
+  async verifyNoRecords(): Promise<void> {
     await this.table.verifyNoRecords()
   }
 
-  async clickEditEmployee(): Promise<void>{
-    await this.table.clickRowAction(0, '.bi-pencil-fill')
+  async clickEditEmployee(): Promise<void> {
+    await this.table.clickEditRow(0)
     await this.waitForLoadingComplete()
     await expect(this.firstNameInput).toBeVisible()
   }
 
-  async updateEmployeeName(firstName: string, middleName: string, lastName: string): Promise<void>{
+  async updateEmployeeName(firstName: string, middleName: string, lastName: string): Promise<void> {
     await this.waitForLoadingComplete()
     await expect(this.firstNameInput).toBeVisible()
     await this.firstNameInput.fill(firstName)
@@ -126,36 +124,15 @@ export default class EmployeePage extends BasePage {
     await this.lastNameInput.fill(lastName)
   }
 
-  async clickDeleteEmployee(): Promise<void>{
-    await this.table.clickRowAction(0, '.bi-trash')
+  async clickDeleteEmployee(): Promise<void> {
+    await this.table.clickDeleteRow(0)
   }
 
-  async confirmDelete(): Promise<void>{
-    const deletePromise = this.page.waitForResponse(
-      resp => resp.url().includes(CONSTANTS.ENDPOINTS.EMPLOYEES) && resp.request().method() === 'DELETE' && resp.status() === 200,
-      { timeout: CONSTANTS.TIMEOUTS.API_WAIT }
-    ).catch(() => {})
-
-    const reloadPromise = this.page.waitForResponse(
-      resp => CONSTANTS.ENDPOINTS.EMPLOYEES_DETAILED instanceof RegExp 
-        ? CONSTANTS.ENDPOINTS.EMPLOYEES_DETAILED.test(resp.url()) 
-        : resp.url().includes(CONSTANTS.ENDPOINTS.EMPLOYEES_DETAILED),
-      { timeout: CONSTANTS.TIMEOUTS.API_WAIT }
-    ).catch(() => {})
-
-    await expect(this.confirmDeleteBtn).toBeVisible()
-    await this.confirmDeleteBtn.click()
-    
-    await deletePromise
-    await reloadPromise
-    await this.waitForLoadingComplete()
-  }
-
-  async verifyDeleteSuccess(): Promise<void>{
+  async verifyDeleteSuccess(): Promise<void> {
     await this.verifyToast(CONSTANTS.MESSAGES.SUCCESS_DELETE)
   }
 
-  async clickEmployeeName(): Promise<void>{
+  async clickEmployeeName(): Promise<void> {
     await this.waitForLoadingComplete()
     const firstRow = this.table.rows.first()
     // Click on the Employee Name cell to view details.

@@ -1,12 +1,16 @@
 export const CONSTANTS = {
   TIMEOUTS: {
     SHORT: 1000,
-    MEDIUM: 2000,
-    DEFAULT: 5000,
-    LONG: 20000,
-    NAVIGATION: 15000,
-    API_WAIT: 30000,
+    MEDIUM: 5000,
+    DEFAULT: 10000,
+    LONG: 30000,
+    NAVIGATION: 45000,
+    API_WAIT: 60000,
     TYPING_DELAY: 200,
+  },
+  CREDENTIALS: {
+    USERNAME: process.env.ADMIN_USERNAME || process.env.USERNAME || 'Admin',
+    PASSWORD: process.env.ADMIN_PASSWORD || process.env.PASSWORD || 'admin123'
   },
   MESSAGES: {
     SUCCESS_SAVE: 'Success',

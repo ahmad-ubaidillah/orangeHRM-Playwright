@@ -1,6 +1,7 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { Rate } from 'k6/metrics';
+import { htmlReport } from "https://raw.githubusercontent.com/benc-uk/k6-reporter/main/dist/bundle.js";
 
 // Custom metrics
 const valid_login_rate = new Rate('valid_login_rate');
@@ -38,7 +39,7 @@ export default function () {
 
   // 1. Check Dashboard (Make sure already logged in)
   const dashboardRes = http.get(`${BASE_URL}/web/index.php/dashboard/index`, { headers });
-  
+
   const loginSuccess = check(dashboardRes, {
     'dashboard access successful': (r) => r.status === 200 && r.body.includes('Dashboard'),
   });
@@ -60,9 +61,15 @@ export default function () {
     const createSuccess = check(createRes, {
       'employee creation successful (API)': (r) => r.status === 200,
     });
-    
+
     successful_employee_creation_rate.add(createSuccess);
   }
 
   sleep(1);
+}
+
+export function handleSummary(data) {
+  return {
+    'summary.html': htmlReport(data),
+  };
 }

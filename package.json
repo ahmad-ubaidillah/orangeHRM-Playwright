@@ -6,6 +6,8 @@
   "scripts": {
     "test": "npx playwright test",
     "test:e2e": "npx playwright test tests/e2e",
+    "test:e2e:headless": "HEADLESS=true npx playwright test tests/e2e --project=chromium",
+    "test:e2e:all": "HEADLESS=true npx playwright test tests/e2e",
     "test:api": "npx playwright test tests/api --project=chromium",
     "test:auth": "npx playwright test tests/e2e/auth.spec.ts",
     "test:employee": "npx playwright test tests/e2e/employee.spec.ts",
@@ -23,6 +25,8 @@
   "devDependencies": {
     "@faker-js/faker": "^10.2.0",
     "@playwright/test": "^1.58.0",
-    "@types/node": "^25.0.10"
+    "@types/dotenv": "^6.1.1",
+    "@types/node": "^25.0.10",
+    "dotenv": "^17.2.3"
   }
 }
