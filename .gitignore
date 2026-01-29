@@ -8,5 +8,5 @@ node_modules/
 /playwright/.auth/
 .env
 storage/
-summary.html
+k6-report/
 .DS_Store

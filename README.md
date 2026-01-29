@@ -29,9 +29,19 @@ Installation steps:
 ## Test Execution
 
 ### End-to-End Tests
-Execute all E2E tests:
+Execute all E2E tests (Headed Mode):
 ```bash
 npx playwright test tests/e2e/
+```
+
+Execute E2E tests in Headless Mode (Chromium only - Faster):
+```bash
+npm run test:e2e:headless
+```
+
+Execute E2E tests in Headless Mode (All Browsers - Cross-browser Check):
+```bash
+npm run test:e2e:all
 ```
 
 Execute a specific test file:
