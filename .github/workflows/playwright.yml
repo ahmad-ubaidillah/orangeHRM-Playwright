@@ -18,15 +18,27 @@ jobs:
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
     - name: Run Playwright E2E tests
-      run: npx playwright test tests/e2e/ --project=chromium
+      env:
+        BASE_URL: ${{ secrets.BASE_URL }}
+        USERNAME: ${{ secrets.USERNAME }}
+        PASSWORD: ${{ secrets.PASSWORD }}
+        CI: true
+      run: npm run test:e2e:headless
     - name: Run Playwright API tests
-      run: npx playwright test tests/api/
+      env:
+        BASE_URL: ${{ secrets.BASE_URL }}
+        USERNAME: ${{ secrets.USERNAME }}
+        PASSWORD: ${{ secrets.PASSWORD }}
+        CI: true
+      run: npm run test:api
     - name: Setup k6
       run: |
         curl -L https://github.com/grafana/k6/releases/download/v0.45.0/k6-v0.45.0-linux-amd64.tar.gz | tar -xz
         sudo cp k6-v0.45.0-linux-amd64/k6 /usr/local/bin/
     - name: Run k6 performance tests
-      run: k6 run tests/performance/load-test.js
+      run: |
+        mkdir -p k6-report
+        npm run test:k6
     - uses: actions/upload-artifact@v4
       if: always()
       with:
@@ -34,5 +46,5 @@ jobs:
         path: |
           playwright-report/
           test-results/
-          summary.html
+          k6-report/
         retention-days: 30
