@@ -29,17 +29,22 @@ Installation steps:
 ## Test Execution
 
 ### End-to-End Tests
-Execute all E2E tests (Headed Mode):
+Execute all E2E tests (headless by default):
 ```bash
 npx playwright test tests/e2e/
 ```
 
-Execute E2E tests in Headless Mode (Chromium only - Faster):
+Watch the run in a visible browser window:
+```bash
+npm run test:headed
+```
+
+Execute E2E tests on Chromium only (Faster):
 ```bash
 npm run test:e2e:headless
 ```
 
-Execute E2E tests in Headless Mode (All Browsers - Cross-browser Check):
+Execute E2E tests across all configured browsers (Cross-browser Check):
 ```bash
 npm run test:e2e:all
 ```
@@ -52,14 +57,24 @@ npx playwright test tests/e2e/employee.spec.ts
 ### API Tests
 Execute API integration tests:
 ```bash
-npx playwright test tests/api/
+npm run test:api
+```
+
+### Typecheck
+Run the TypeScript compiler without emitting files:
+```bash
+npm run typecheck
 ```
 
 ### Performance Tests
 Execute load tests using k6:
 ```bash
-k6 run tests/performance/load-test.js
+npm run test:k6
 ```
+
+The run writes an HTML summary to `k6-report/summary.html` and exits non-zero if
+any threshold is crossed. The script prints progress to stdout; open the summary
+file for the detailed breakdown.
 
 ## Project Structure
 
@@ -79,27 +94,38 @@ The framework implements several strategies to ensure test execution is stable:
 
 ## Environment Configuration
 
-The framework supports environment-based configuration using `.env` files. Create a `.env.local` file to override default settings:
+The framework supports environment-based configuration using a `.env` file. See
+`.env.example` for the available keys and copy it to `.env` to customise:
 
 ```bash
-# Copy .env to .env.local and customize
+cp .env.example .env
+```
+
+```bash
+# .env
 BASE_URL=https://your-orangehrm-instance.com
 ADMIN_USERNAME=your_admin_user
 ADMIN_PASSWORD=your_admin_password
 ```
 
+Only `.env` is read. The `dotenv` call in `playwright.config.ts` resolves a
+single `.env` path, so `.env.local` and other variants are not picked up
+automatically -- export them in your shell instead.
+
 Environment variables used:
 *   `BASE_URL`: Target OrangeHRM instance URL
 *   `ADMIN_USERNAME`: Admin username for authentication
 *   `ADMIN_PASSWORD`: Admin password for authentication
-*   `HEADLESS`: Run browser in headless mode (true/false)
-*   `BROWSER`: Browser to use (chromium, firefox, webkit)
+*   `HEADLESS`: Set to `false` to watch the run in a visible browser window
 *   `RETRIES`: Number of retry attempts for failed tests
 *   `WEB_TIMEOUT`: Web navigation timeout in milliseconds
 *   `API_TIMEOUT`: API request timeout in milliseconds
 *   `ASSERTION_TIMEOUT`: Assertion timeout in milliseconds
 *   `CI`: Set to true when running in CI/CD environment
 *   `REPORT_DIR`: Directory for HTML test reports
+
+Browser selection is done with Playwright's `--project` flag (`chromium`,
+`chromium-auth`, `firefox`, `webkit`), not an environment variable.
 
 ## Flaky Test Management
 
@@ -129,9 +155,9 @@ Flaky tests are tests that can pass or fail intermittently without any code chan
 
 3. **Proper Cleanup**: Ensure tests delete resources they create to prevent data pollution.
 
-4. **Retry Configuration**: Configure reasonable retry attempts for known flaky operations. The framework uses `retries: 2` by default.
+4. **Retry Configuration**: Configure reasonable retry attempts for known flaky operations. Retries default to `2` on CI and `0` locally, so a local run fails loudly on a real regression. Override with `RETRIES`.
 
-5. **Avoid Dependencies**: Do not rely on execution order between tests. Each test should be independent.
+5. **Avoid Dependencies**: Do not rely on execution order between tests. Each test should be independent. Note that the Employee CRUD suite does chain its steps (create → update → delete) because each step needs the record the previous one made; the whole file must run in one go.
 
 6. **Screenshot and Video**: Capture artifacts on failure to aid debugging.
 
@@ -139,5 +165,7 @@ Flaky tests are tests that can pass or fail intermittently without any code chan
 
 GitHub Actions is configured to run tests on every push or pull request to the main branch. The workflow performs the following:
 1.  Environment setup and dependency installation.
-2.  Sequential execution of E2E, API, and k6 tests.
-3.  Archiving test reports and results as downloadable artifacts.
+2.  Typecheck, which fails the run before any test starts.
+3.  Execution of E2E tests (Chromium and the auth project) and API tests, using the `BASE_URL`, `USERNAME` and `PASSWORD` repository secrets.
+4.  A k6 load run, with the reporter pinned to the same k6 version used locally.
+5.  Archiving `playwright-report/`, `test-results/` and `k6-report/` as downloadable artifacts.
