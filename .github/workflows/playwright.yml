@@ -17,14 +17,21 @@ jobs:
       run: npm ci
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
+    - name: Typecheck
+      run: npm run typecheck
     - name: Run Playwright E2E tests
-      run: npx playwright test tests/e2e/ --project=chromium
+      run: npx playwright test tests/e2e/ --project=chromium --project=chromium-auth
     - name: Run Playwright API tests
-      run: npx playwright test tests/api/
+      run: npx playwright test tests/api/ --project=chromium
     - name: Setup k6
       run: |
-        curl -L https://github.com/grafana/k6/releases/download/v0.45.0/k6-v0.45.0-linux-amd64.tar.gz | tar -xz
-        sudo cp k6-v0.45.0-linux-amd64/k6 /usr/local/bin/
+        # Keep in step with the local version. k6 v2 changed lifecycle rules
+        # (HTTP is no longer allowed in the init context) and the load test
+        # depends on that behaviour.
+        K6_VERSION="v2.3.0"
+        curl -L "https://github.com/grafana/k6/releases/download/${K6_VERSION}/k6-${K6_VERSION}-linux-amd64.tar.gz" | tar -xz
+        sudo install -m 755 "k6-${K6_VERSION}-linux-amd64/k6" /usr/local/bin/k6
+        k6 version
     - name: Run k6 performance tests
       run: k6 run tests/performance/load-test.js
     - uses: actions/upload-artifact@v4

@@ -16,9 +16,10 @@ async function ensureAuthenticated(
 ): Promise<void> {
   // Go to login page - if already authenticated via storageState, server redirects to dashboard
   await page.goto('/web/index.php/auth/login')
-  
-  // Wait for the URL to resolve to either dashboard (redirect) or login (no session)
-  await expect(page).toHaveURL(/dashboard|login/, { timeout: CONSTANTS.TIMEOUTS.DEFAULT});
+
+  // The demo host can take well over the generic DEFAULT timeout to settle a
+  // redirect, so give this navigation the NAVIGATION budget explicitly.
+  await expect(page).toHaveURL(/dashboard|login/, { timeout: CONSTANTS.TIMEOUTS.NAVIGATION });
 
   // If we landed on dashboard, we hit the storageState cache. 
   // We MUST still validate that the dashboard is loaded before returning.

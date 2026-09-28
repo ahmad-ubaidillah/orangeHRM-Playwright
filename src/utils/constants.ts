@@ -4,7 +4,9 @@ export const CONSTANTS = {
     MEDIUM: 2000,
     DEFAULT: 5000,
     LONG: 20000,
-    NAVIGATION: 15000,
+    // The public demo host settles navigations slowly; 15s was not enough and
+    // caused ensureAuthenticated to fail on a healthy server.
+    NAVIGATION: 60000,
     API_WAIT: 30000,
     TYPING_DELAY: 200,
   },

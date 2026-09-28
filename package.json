@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "npx playwright test",
+    "typecheck": "tsc --noEmit",
     "test:e2e": "npx playwright test tests/e2e",
     "test:api": "npx playwright test tests/api --project=chromium",
     "test:auth": "npx playwright test tests/e2e/auth.spec.ts",
@@ -22,7 +23,8 @@
   "type": "commonjs",
   "devDependencies": {
     "@faker-js/faker": "^10.2.0",
-    "@playwright/test": "^1.58.0",
-    "@types/node": "^25.0.10"
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^25.0.10",
+    "typescript": "^7.0.2"
   }
 }

@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { generateEmployeeData } from '../../src/utils/test-data';
 import { CONSTANTS } from '../../src/utils/constants';
+import { requestWithRetry } from '../../src/utils/api-retry';
 
 test.describe('API - Employee Management @api', () => {
   test.describe.configure({ mode: 'serial' });
@@ -21,7 +22,7 @@ test.describe('API - Employee Management @api', () => {
       empPicture: null
     };
 
-    const response = await request.post(`${CONSTANTS.API.BASE}${CONSTANTS.API.EMPLOYEES}`, {
+    const response = await requestWithRetry(request, 'post', `${CONSTANTS.API.BASE}${CONSTANTS.API.EMPLOYEES}`, {
       data: payload
     });
 
@@ -32,7 +33,7 @@ test.describe('API - Employee Management @api', () => {
   });
 
   test('02 - GET /pim/employees/{id} - Verify Created Employee', async ({ request }) => {
-    const response = await request.get(`${CONSTANTS.API.BASE}${CONSTANTS.API.EMPLOYEES}?limit=50&offset=0&model=detailed&includeEmployees=onlyCurrent&employeeId=${employeeData.employeeId}`);
+    const response = await requestWithRetry(request, 'get', `${CONSTANTS.API.BASE}${CONSTANTS.API.EMPLOYEES}?limit=50&offset=0&model=detailed&includeEmployees=onlyCurrent&employeeId=${employeeData.employeeId}`);
     
     expect(response.status()).toBe(200);
     const body = await response.json();
@@ -51,7 +52,7 @@ test.describe('API - Employee Management @api', () => {
       employeeId: employeeData.employeeId
     };
 
-    const response = await request.put(`${CONSTANTS.API.BASE}${CONSTANTS.API.EMPLOYEES}/${empNumber}/personal-details`, {
+    const response = await requestWithRetry(request, 'put', `${CONSTANTS.API.BASE}${CONSTANTS.API.EMPLOYEES}/${empNumber}/personal-details`, {
       data: updatePayload
     });
 
@@ -62,7 +63,7 @@ test.describe('API - Employee Management @api', () => {
 
   test('04 - DELETE /pim/employees - Delete Employee', async ({ request }) => {
     // Delete the employee from the system using the employee number (empNumber).
-    const response = await request.delete(`${CONSTANTS.API.BASE}${CONSTANTS.API.EMPLOYEES}`, {
+    const response = await requestWithRetry(request, 'delete', `${CONSTANTS.API.BASE}${CONSTANTS.API.EMPLOYEES}`, {
       data: {
         ids: [empNumber]
       }
