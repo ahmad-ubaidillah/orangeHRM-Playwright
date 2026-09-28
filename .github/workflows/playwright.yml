@@ -20,9 +20,21 @@ jobs:
     - name: Typecheck
       run: npm run typecheck
     - name: Run Playwright E2E tests
+      env:
+        BASE_URL: ${{ secrets.BASE_URL }}
+        USERNAME: ${{ secrets.USERNAME }}
+        PASSWORD: ${{ secrets.PASSWORD }}
+        CI: true
+      # --project is explicit because the chromium project testIgnores
+      # auth.spec.ts, so relying on the default would silently skip auth tests.
       run: npx playwright test tests/e2e/ --project=chromium --project=chromium-auth
     - name: Run Playwright API tests
-      run: npx playwright test tests/api/ --project=chromium
+      env:
+        BASE_URL: ${{ secrets.BASE_URL }}
+        USERNAME: ${{ secrets.USERNAME }}
+        PASSWORD: ${{ secrets.PASSWORD }}
+        CI: true
+      run: npm run test:api
     - name: Setup k6
       run: |
         # Keep in step with the local version. k6 v2 changed lifecycle rules
@@ -33,7 +45,7 @@ jobs:
         sudo install -m 755 "k6-${K6_VERSION}-linux-amd64/k6" /usr/local/bin/k6
         k6 version
     - name: Run k6 performance tests
-      run: k6 run tests/performance/load-test.js
+      run: npm run test:k6
     - uses: actions/upload-artifact@v4
       if: always()
       with:
@@ -41,4 +53,5 @@ jobs:
         path: |
           playwright-report/
           test-results/
+          k6-report/
         retention-days: 30

@@ -9,7 +9,7 @@ export default class DashboardPage extends BasePage {
   readonly signout: Locator
   readonly widget: Locator
 
-  constructor(page: Page){
+  constructor(page: Page) {
     super(page)
     this.breadcrumb = page.locator('.oxd-topbar-header-breadcrumb-module');
     this.profile = page.locator('.oxd-userdropdown-tab');
@@ -23,6 +23,7 @@ export default class DashboardPage extends BasePage {
   }
 
   async validateDashboard(): Promise<string> {
+    await expect(this.page).toHaveURL(/dashboard/, { timeout: CONSTANTS.TIMEOUTS.NAVIGATION });
     await this.waitForLoadingComplete()
     await expect(
       this.widget,

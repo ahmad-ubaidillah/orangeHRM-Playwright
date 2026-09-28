@@ -1,6 +1,7 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { Counter, Rate, Trend } from 'k6/metrics';
+import { htmlReport } from "https://raw.githubusercontent.com/benc-uk/k6-reporter/main/dist/bundle.js";
 
 const valid_session_rate = new Rate('valid_session_rate');
 const successful_employee_creation_rate = new Rate('successful_employee_creation_rate');
@@ -53,7 +54,11 @@ function login() {
 
   http.post(
     LOGIN_URL,
-    { _token: token, username: 'Admin', password: 'admin123' },
+    {
+      _token: token,
+      username: __ENV.ADMIN_USERNAME || 'Admin',
+      password: __ENV.ADMIN_PASSWORD || 'admin123',
+    },
     { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },
   );
 }
@@ -113,4 +118,12 @@ export default function () {
   employee_create_latency.add(createRes.timings.duration);
 
   sleep(1);
+}
+
+export function handleSummary(data) {
+  // The report folder is not created by k6, and relying on the caller to mkdir
+  // it means a bare `k6 run` fails at the end-of-test summary.
+  return {
+    'k6-report/summary.html': htmlReport(data),
+  };
 }

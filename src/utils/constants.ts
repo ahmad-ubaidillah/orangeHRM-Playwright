@@ -1,14 +1,19 @@
 export const CONSTANTS = {
   TIMEOUTS: {
     SHORT: 1000,
-    MEDIUM: 2000,
-    DEFAULT: 5000,
-    LONG: 20000,
-    // The public demo host settles navigations slowly; 15s was not enough and
-    // caused ensureAuthenticated to fail on a healthy server.
+    MEDIUM: 5000,
+    DEFAULT: 10000,
+    LONG: 30000,
+    // The public demo host settles navigations slowly. 15s failed here, and a
+    // 60s budget was verified against it (see ensureAuthenticated); the merge
+    // candidate's 45s is kept below that on purpose.
     NAVIGATION: 60000,
-    API_WAIT: 30000,
+    API_WAIT: 60000,
     TYPING_DELAY: 200,
+  },
+  CREDENTIALS: {
+    USERNAME: process.env.ADMIN_USERNAME || process.env.USERNAME || 'Admin',
+    PASSWORD: process.env.ADMIN_PASSWORD || process.env.PASSWORD || 'admin123'
   },
   MESSAGES: {
     SUCCESS_SAVE: 'Success',

@@ -1,5 +1,5 @@
 import { Page, Locator, expect } from "@playwright/test"
-import LoginPage from "./LoginPage"
+
 import { CONSTANTS } from "../utils/constants"
 
 export default class BasePage {
@@ -7,16 +7,15 @@ export default class BasePage {
   readonly loadingSpinner: Locator;
   readonly successToast: Locator;
 
-  constructor(page: Page){
+  constructor(page: Page) {
     this.page = page
     this.loadingSpinner = page.locator('.oxd-loading-spinner').first()
     this.successToast = page.locator('.oxd-toast--success')
   }
 
-  async openApplication(): Promise<void>{
-    const loginPage = new LoginPage(this.page)
+  async openApplication(): Promise<void> {
     await this.page.goto(CONSTANTS.URLS.LOGIN);
-    await expect(loginPage.usernameInput).toBeVisible();
+    await expect(this.page.locator('input[name="username"]')).toBeVisible();
   }
 
   /**
@@ -36,6 +35,14 @@ export default class BasePage {
 
   async refresh(): Promise<void> {
     await this.page.reload({ waitUntil: 'networkidle' })
+    await this.waitForLoadingComplete()
+  }
+
+  async confirmDelete(): Promise<void> {
+    const confirmBtn = this.page.getByRole('button', { name: 'Yes, Delete' })
+    await expect(confirmBtn).toBeVisible()
+    await confirmBtn.click()
+    await this.verifyToast(CONSTANTS.MESSAGES.SUCCESS_DELETE)
     await this.waitForLoadingComplete()
   }
 }
@@ -77,5 +84,13 @@ export class TableComponent {
     const row = this.rows.nth(rowIndex)
     await expect(row).toBeVisible()
     await row.locator(actionIconClass).first().click()
+  }
+
+  async clickEditRow(rowIndex: number = 0): Promise<void> {
+    await this.clickRowAction(rowIndex, '.bi-pencil-fill')
+  }
+
+  async clickDeleteRow(rowIndex: number = 0): Promise<void> {
+    await this.clickRowAction(rowIndex, '.bi-trash')
   }
 }
